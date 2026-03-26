@@ -1,85 +1,62 @@
-pipeline {
-    agent any
+pipeline {                                    // starts the jenkins pipeline
+    agent any                                 // run on any available jenkins agent
 
-    environment {
-        IMAGE_NAME = 'python-addition-app'
-        IMAGE_TAG  = "${BUILD_NUMBER}"
-    }
+    stages {                                  // all stages go inside here
 
-    stages {
-
-        stage('Checkout') {
+        stage('Checkout') {                   // stage 1 - pull code from github
             steps {
-                echo 'Pulling code from GitHub...'
-                git branch: 'main',
-                    url: 'https://github.com/lalith900/jenkins-repo.git',
-                    credentialsId: 'github-credentials'
+                git branch: 'main',                                         // which branch to pull
+                    url: 'https://github.com/lalith900/jenkins-repo.git',  // your github repo url
+                    credentialsId: 'github-credentials'                     // credentials saved in jenkins
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Install Dependencies') {       // stage 2 - install required packages
             steps {
-                echo 'Installing required packages...'
-                sh '''
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    pip install -r requirements.txt
-                '''
+                sh 'pip install pytest'       // install pytest so we can run tests
             }
         }
 
-        stage('Run Application') {
+        stage('Run App') {                    // stage 3 - run the python program
             steps {
-                echo 'Running the addition program...'
-                sh '''
-                    . venv/bin/activate
-                    python3 addition.py
-                '''
+                sh 'python3 addition.py'      // this will print Result: 30
             }
         }
 
-        stage('Run Tests') {
+        stage('Run Tests') {                  // stage 4 - test the program
             steps {
-                echo 'Running test cases...'
-                sh '''
-                    . venv/bin/activate
-                    pytest test_addition.py -v
-                '''
+                sh 'pytest test_addition.py -v'   // -v means show detailed test results
             }
         }
 
-        stage('Docker Build') {
+        stage('Docker Build') {               // stage 5 - build docker image
             steps {
-                echo 'Building Docker image...'
-                sh '''
-                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
-                '''
+                sh 'docker build -t lalith900/python-addition-app:latest .'  // build and tag image
             }
         }
 
-        stage('Verify Image') {
+        stage('Docker Push') {                // stage 6 - push image to dockerhub
             steps {
-                echo 'Verifying Docker image...'
-                sh '''
-                    docker images | grep ${IMAGE_NAME}
-                    docker run --rm ${IMAGE_NAME}:latest
-                '''
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',  // credentials saved in jenkins
+                    usernameVariable: 'DOCKER_USER',         // jenkins reads username from credentials
+                    passwordVariable: 'DOCKER_PASS'          // jenkins reads password from credentials
+                )]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'  // login to dockerhub
+                    sh 'docker push lalith900/python-addition-app:latest'                   // push image
+                    sh 'docker logout'                                                       // logout after push
+                }
             }
         }
 
     }
 
-    post {
+    post {                                    // runs after all stages complete
         success {
-            echo 'Docker image built successfully!'
-            sh 'docker images | grep ${IMAGE_NAME}'
+            echo 'pipeline completed - image pushed to dockerhub!'   // printed if everything passed
         }
         failure {
-            echo 'Pipeline failed — check logs above.'
-        }
-        always {
-            cleanWs()
+            echo 'pipeline failed - check the red stage above!'      // printed if anything failed
         }
     }
 }
