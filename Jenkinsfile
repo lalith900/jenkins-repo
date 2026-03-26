@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = 'python-addition-app'
+        IMAGE_TAG  = "${BUILD_NUMBER}"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -43,14 +48,35 @@ pipeline {
             }
         }
 
+        stage('Docker Build') {
+            steps {
+                echo 'Building Docker image...'
+                sh '''
+                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                '''
+            }
+        }
+
+        stage('Verify Image') {
+            steps {
+                echo 'Verifying Docker image...'
+                sh '''
+                    docker images | grep ${IMAGE_NAME}
+                    docker run --rm ${IMAGE_NAME}:latest
+                '''
+            }
+        }
+
     }
 
     post {
         success {
-            echo 'Pipeline finished successfully — all tests passed!'
+            echo 'Docker image built successfully!'
+            sh 'docker images | grep ${IMAGE_NAME}'
         }
         failure {
-            echo 'Pipeline failed — check the logs above.'
+            echo 'Pipeline failed — check logs above.'
         }
         always {
             cleanWs()
