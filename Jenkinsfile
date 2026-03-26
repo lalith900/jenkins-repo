@@ -25,7 +25,7 @@ pipeline {                                    // starts the jenkins pipeline
 
         stage('Run Tests') {                  // stage 4 - test the program
             steps {
-                sh 'pytest test_addition.py -v'   // -v means show detailed test results
+                sh 'python3 -m pytest test_addition.py -v'   // -v means show detailed test results
             }
         }
 
