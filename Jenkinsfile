@@ -8,7 +8,7 @@ pipeline {
                 echo 'Pulling code from GitHub...'
                 git branch: 'main',
                     url: 'https://github.com/lalith900/jenkins-repo.git',
-                    credentialsId: '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'
+                    credentialsId: 'github-credentials'
             }
         }
 
