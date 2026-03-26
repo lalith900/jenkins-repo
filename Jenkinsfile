@@ -31,7 +31,7 @@ pipeline {                                    // starts the jenkins pipeline
 
         stage('Docker Build') {               // stage 5 - build docker image
             steps {
-                sh 'docker build -t lalith900/python-addition-app:latest .'  // build and tag image
+                sh 'docker build -t lalithakrishna/python-addition-app:latest .'  // build and tag image
             }
         }
 
@@ -43,7 +43,7 @@ pipeline {                                    // starts the jenkins pipeline
                     passwordVariable: 'DOCKER_PASS'          // jenkins reads password from credentials
                 )]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'  // login to dockerhub
-                    sh 'docker push lalith900/python-addition-app:latest'                   // push image
+                    sh 'docker push lalithakrishna/python-addition-app:latest'                   // push image
                     sh 'docker logout'                                                       // logout after push
                 }
             }
