@@ -13,7 +13,7 @@ pipeline {                                    // starts the jenkins pipeline
 
         stage('Install Dependencies') {       // stage 2 - install required packages
             steps {
-                sh 'pip install pytest'       // install pytest so we can run tests
+                sh 'pip install pytest --break-system-packages'       // install pytest so we can run tests
             }
         }
 
